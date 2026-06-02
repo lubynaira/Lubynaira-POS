@@ -49,19 +49,6 @@ function LoadingSplash() {
         >
           LUBY<br />NAIRA
         </div>
-        <div
-          style={{
-            marginTop: 14,
-            fontFamily: 'DM Sans, sans-serif',
-            fontStyle: 'italic',
-            fontWeight: 400,
-            fontSize: 'clamp(13px, 3.4vw, 16px)',
-            color: 'rgba(255,255,255,0.55)',
-            letterSpacing: '0.01em',
-          }}
-        >
-          Cetak Custom Produkmu Disini!!!
-        </div>
       </div>
 
       {/* Subtle slow-loading hint (only after 3s) */}
