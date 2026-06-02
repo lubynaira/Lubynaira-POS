@@ -1,25 +1,15 @@
 -- ##################################################################
 -- ##  LUBY NAIRA POS — SUPABASE BACKEND SETUP (ALL-IN-ONE)         ##
 -- ##################################################################
---
--- File ini menggabungkan schema dasar + semua migrasi menjadi satu,
--- berurutan, dan IDEMPOTENT (aman dijalankan ulang).
---
--- CARA PAKAI (sekali saja untuk database baru Luby Naira):
---   1. Buat project baru di https://supabase.com  (database Luby Naira)
---   2. Buka Dashboard → SQL Editor → New query
---   3. Copy SELURUH isi file ini, paste, lalu klik RUN
---   4. Salin Project URL + anon key (Settings → API) ke file .env aplikasi
---
--- Urutan eksekusi:
---   [0] schema dasar (tabel, trigger, RLS, storage, realtime)
---   [1..9] migrasi penyempurnaan & perbaikan
+-- Idempotent. Paste seluruh isi ke Supabase SQL Editor -> RUN.
+--   1. Buat project baru di https://supabase.com
+--   2. SQL Editor -> New query -> paste -> RUN
+--   3. Settings -> API: salin URL + anon key ke .env aplikasi
 -- ##################################################################
 
 
-
 -- ================================================================
--- >>> BAGIAN: [0] SCHEMA DASAR (schema.sql)
+-- >>> BAGIAN: [0] SCHEMA DASAR (schema.sql) — termasuk GRANTS + admins_role_check
 -- ================================================================
 -- =============================================================
 -- Luby Naira POS — Supabase schema (Enterprise edition, fully idempotent)
@@ -55,9 +45,13 @@ CREATE TABLE IF NOT EXISTS public.admins (
   username    text UNIQUE NOT NULL,
   password    text NOT NULL,
   name        text DEFAULT '',
-  role        text DEFAULT 'staff',
+  role        text DEFAULT 'cashier',
   created_at  timestamptz DEFAULT now()
 );
+
+-- Role hanya boleh owner/admin/cashier/staff
+ALTER TABLE public.admins DROP CONSTRAINT IF EXISTS admins_role_check;
+ALTER TABLE public.admins ADD CONSTRAINT admins_role_check CHECK (role IN ('owner', 'admin', 'cashier', 'staff'));
 
 CREATE TABLE IF NOT EXISTS public.customers (
   id                  uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -276,6 +270,16 @@ DO $$ BEGIN CREATE POLICY "anon all products"      ON public.products      FOR A
 DO $$ BEGIN CREATE POLICY "anon all transactions"  ON public.transactions  FOR ALL USING (true) WITH CHECK (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 DO $$ BEGIN CREATE POLICY "anon all debts"         ON public.debts         FOR ALL USING (true) WITH CHECK (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 DO $$ BEGIN CREATE POLICY "anon all debt_payments" ON public.debt_payments FOR ALL USING (true) WITH CHECK (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- ---------- GRANTS (anon + authenticated) ----------
+-- PENTING: RLS hanya mengatur baris. Role tetap butuh privilege tabel,
+-- jika tidak akan muncul error: "permission denied for table ...".
+GRANT USAGE ON SCHEMA public TO anon, authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO anon, authenticated;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated;
+-- Berlaku juga untuk tabel/sequence yang dibuat di masa depan:
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO anon, authenticated;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO anon, authenticated;
 
 -- ---------- STORAGE: logos bucket ----------
 
@@ -545,7 +549,7 @@ UPDATE public.admins SET role = 'cashier' WHERE role IS NULL;
 ALTER TABLE public.admins DROP CONSTRAINT IF EXISTS admins_role_check;
 ALTER TABLE public.admins
   ADD CONSTRAINT admins_role_check
-  CHECK (role IN ('owner', 'admin', 'cashier'));
+  CHECK (role IN ('owner', 'admin', 'cashier', 'staff'));
 
 -- 2) transactions — pastikan cashier_id, cashier (name), cashier_role ada
 ALTER TABLE public.transactions
@@ -1310,41 +1314,29 @@ NOTIFY pgrst, 'reload schema';
 
 
 -- ================================================================
--- >>> BAGIAN: [10] AKSES BACA settings UNTUK anon + authenticated
+-- >>> BAGIAN: [10] PENEGASAN AKSES & CONSTRAINT
 -- ================================================================
--- Memastikan tabel `settings` (nama toko, logo, bank, dll) bisa dibaca
--- baik oleh user anon (belum login) maupun authenticated (sudah login),
--- dan tetap bisa di-update dari halaman Settings aplikasi.
--- Idempotent & aman dijalankan ulang.
-
--- 1) Table-level privileges
 GRANT USAGE ON SCHEMA public TO anon, authenticated;
-GRANT SELECT, INSERT, UPDATE ON public.settings TO anon, authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO anon, authenticated;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO anon, authenticated;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO anon, authenticated;
 
--- 2) Pastikan RLS aktif
+-- Role admin: owner | admin | cashier | staff  (cocok dgn dropdown app)
+ALTER TABLE public.admins DROP CONSTRAINT IF EXISTS admins_role_check;
+ALTER TABLE public.admins ADD CONSTRAINT admins_role_check
+  CHECK (role IN ('owner', 'admin', 'cashier', 'staff'));
+
 ALTER TABLE public.settings ENABLE ROW LEVEL SECURITY;
-
--- 3) Policy SELECT eksplisit untuk anon + authenticated
 DO $$ BEGIN
-  CREATE POLICY "settings read anon+auth"
-    ON public.settings
-    FOR SELECT
-    TO anon, authenticated
-    USING (true);
+  CREATE POLICY "settings read anon+auth"  ON public.settings
+    FOR SELECT TO anon, authenticated USING (true);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN
+  CREATE POLICY "settings write anon+auth" ON public.settings
+    FOR ALL    TO anon, authenticated USING (true) WITH CHECK (true);
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
--- 4) Policy WRITE (insert/update) untuk anon + authenticated
---    (aplikasi menyimpan perubahan toko tanpa sesi auth Supabase)
-DO $$ BEGIN
-  CREATE POLICY "settings write anon+auth"
-    ON public.settings
-    FOR ALL
-    TO anon, authenticated
-    USING (true)
-    WITH CHECK (true);
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;
-
--- 5) Pastikan baris settings default (id=1) selalu ada
 INSERT INTO public.settings (id, name, tagline)
 VALUES (1, 'Luby Naira', 'Cetak Custom Produkmu Disini!!!')
 ON CONFLICT (id) DO NOTHING;

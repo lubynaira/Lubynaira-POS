@@ -117,7 +117,7 @@ export default function Settings({
     }
   }
 
-  const [newAdmin, setNewAdmin] = useState({ username: '', name: '', password: '', role: 'staff' })
+  const [newAdmin, setNewAdmin] = useState({ username: '', name: '', password: '', role: 'cashier' })
 
   const handleAddAdmin = async () => {
     setAddingAdmin(true)
@@ -125,7 +125,7 @@ export default function Settings({
       const res = await addAdmin(newAdmin)
       if (res.ok) {
         flash('success', `Admin "${newAdmin.username}" ditambahkan`)
-        setNewAdmin({ username: '', name: '', password: '', role: 'staff' })
+        setNewAdmin({ username: '', name: '', password: '', role: 'cashier' })
       } else {
         flash('error', res.error || 'Gagal menambah admin')
       }
@@ -427,7 +427,7 @@ export default function Settings({
                         color: 'var(--text-primary)',
                       }}
                     >
-                      <option value="staff">Staff Kasir</option>
+                      <option value="cashier">Staff Kasir</option>
                       <option value="owner">Owner</option>
                     </select>
                   </div>

@@ -183,7 +183,7 @@ export default function Header({
             height: 36,
             cursor: isOwner ? 'pointer' : 'default',
           }}
-          title={isOwner ? 'Pengaturan' : `${currentUser?.role || 'staff'}`}
+          title={isOwner ? 'Pengaturan' : `${currentUser?.role || 'cashier'}`}
         >
           <div className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold"
             style={{
@@ -200,7 +200,7 @@ export default function Header({
               {currentUser?.name || currentUser?.username || 'Staff'}
             </div>
             <div className="text-xs leading-tight" style={{ color: 'var(--text-muted)' }}>
-              {currentUser?.role || 'staff'}
+              {currentUser?.role || 'cashier'}
             </div>
           </div>
         </button>

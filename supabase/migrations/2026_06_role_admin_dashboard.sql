@@ -22,7 +22,7 @@ UPDATE public.admins SET role = 'cashier' WHERE role IS NULL;
 ALTER TABLE public.admins DROP CONSTRAINT IF EXISTS admins_role_check;
 ALTER TABLE public.admins
   ADD CONSTRAINT admins_role_check
-  CHECK (role IN ('owner', 'admin', 'cashier'));
+  CHECK (role IN ('owner', 'admin', 'cashier', 'staff'));
 
 -- 2) transactions — pastikan cashier_id, cashier (name), cashier_role ada
 ALTER TABLE public.transactions

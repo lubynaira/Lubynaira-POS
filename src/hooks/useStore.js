@@ -46,7 +46,7 @@ const settingsToDB = (s) => ({
 
 const adminFromDB = (r) => ({
   id: r.id, username: r.username, password: r.password,
-  name: r.name || r.username, role: r.role || 'staff',
+  name: r.name || r.username, role: r.role || 'cashier',
 })
 
 const customerFromDB = (r) => ({
@@ -370,7 +370,7 @@ export function useStore() {
     if (!u) return { ok: false, error: 'Username wajib diisi' }
     if (!data.password || data.password.length < 4) return { ok: false, error: 'Password minimal 4 karakter' }
     const { data: inserted, error: e } = await supabase.from('admins')
-      .insert({ username: u, password: data.password, name: data.name || u, role: data.role || 'staff' })
+      .insert({ username: u, password: data.password, name: data.name || u, role: data.role || 'cashier' })
       .select().single()
     if (e) {
       if (String(e.message).includes('duplicate')) return { ok: false, error: 'Username sudah dipakai' }

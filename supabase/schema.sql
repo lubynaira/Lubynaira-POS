@@ -32,9 +32,13 @@ CREATE TABLE IF NOT EXISTS public.admins (
   username    text UNIQUE NOT NULL,
   password    text NOT NULL,
   name        text DEFAULT '',
-  role        text DEFAULT 'staff',
+  role        text DEFAULT 'cashier',
   created_at  timestamptz DEFAULT now()
 );
+
+-- Role hanya boleh owner/admin/cashier/staff
+ALTER TABLE public.admins DROP CONSTRAINT IF EXISTS admins_role_check;
+ALTER TABLE public.admins ADD CONSTRAINT admins_role_check CHECK (role IN ('owner', 'admin', 'cashier', 'staff'));
 
 CREATE TABLE IF NOT EXISTS public.customers (
   id                  uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -253,6 +257,16 @@ DO $$ BEGIN CREATE POLICY "anon all products"      ON public.products      FOR A
 DO $$ BEGIN CREATE POLICY "anon all transactions"  ON public.transactions  FOR ALL USING (true) WITH CHECK (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 DO $$ BEGIN CREATE POLICY "anon all debts"         ON public.debts         FOR ALL USING (true) WITH CHECK (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 DO $$ BEGIN CREATE POLICY "anon all debt_payments" ON public.debt_payments FOR ALL USING (true) WITH CHECK (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- ---------- GRANTS (anon + authenticated) ----------
+-- PENTING: RLS hanya mengatur baris. Role tetap butuh privilege tabel,
+-- jika tidak akan muncul error: "permission denied for table ...".
+GRANT USAGE ON SCHEMA public TO anon, authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO anon, authenticated;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated;
+-- Berlaku juga untuk tabel/sequence yang dibuat di masa depan:
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO anon, authenticated;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO anon, authenticated;
 
 -- ---------- STORAGE: logos bucket ----------
 
