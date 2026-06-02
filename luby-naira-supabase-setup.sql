@@ -9,7 +9,7 @@
 
 
 -- ================================================================
--- >>> BAGIAN: [0] SCHEMA DASAR (schema.sql) — termasuk GRANTS + admins_role_check
+-- >>> BAGIAN: [0] SCHEMA DASAR (schema.sql) — tabel, GRANTS, role_check, CATEGORIES
 -- ================================================================
 -- =============================================================
 -- Luby Naira POS — Supabase schema (Enterprise edition, fully idempotent)
@@ -400,6 +400,39 @@ UPDATE public.customers c
 -- (e.g. products.unit) without needing a manual API restart.
 NOTIFY pgrst, 'reload schema';
 
+
+-- ---------- CATEGORIES (kategori produk — bisa diisi manual via Pengaturan) ----------
+CREATE TABLE IF NOT EXISTS public.categories (
+  id          text PRIMARY KEY,
+  label       text NOT NULL,
+  icon        text DEFAULT '📦',
+  sort_order  integer DEFAULT 0,
+  created_at  timestamptz DEFAULT now()
+);
+ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
+DO $$ BEGIN CREATE POLICY "anon all categories" ON public.categories FOR ALL USING (true) WITH CHECK (true); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.categories TO anon, authenticated;
+
+-- Seed default (boleh dihapus/ubah dari aplikasi)
+INSERT INTO public.categories (id, label, icon, sort_order) VALUES
+  ('jersey','Jersey','👕',1),
+  ('kaos','Kaos','👚',2),
+  ('banner','Banner','🚩',3),
+  ('sticker','Sticker','✨',4),
+  ('printing','Printing','🖨️',5),
+  ('accessories','Accessories','🎒',6),
+  ('other','Other','📦',7)
+ON CONFLICT (id) DO NOTHING;
+
+-- Realtime
+DO $$ BEGIN
+  IF EXISTS (SELECT 1 FROM pg_publication WHERE pubname='supabase_realtime')
+     AND NOT EXISTS (
+       SELECT 1 FROM pg_publication_tables
+       WHERE pubname='supabase_realtime' AND schemaname='public' AND tablename='categories')
+  THEN EXECUTE 'ALTER PUBLICATION supabase_realtime ADD TABLE public.categories';
+  END IF;
+END $$;
 
 
 -- ================================================================
@@ -1322,7 +1355,6 @@ GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO anon, authenticated;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO anon, authenticated;
 
--- Role admin: owner | admin | cashier | staff  (cocok dgn dropdown app)
 ALTER TABLE public.admins DROP CONSTRAINT IF EXISTS admins_role_check;
 ALTER TABLE public.admins ADD CONSTRAINT admins_role_check
   CHECK (role IN ('owner', 'admin', 'cashier', 'staff'));

@@ -128,7 +128,7 @@ function QtyInput({ qty, allowDecimal, onChange, onCommit }) {
   )
 }
 
-export default function Kasir({ products, customers = [], addTransaction, storeInfo, busy }) {
+export default function Kasir({ products, customers = [], addTransaction, storeInfo, busy, categories = CATEGORIES }) {
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('all')
   const [cart, setCart] = useState([])
@@ -898,7 +898,7 @@ export default function Kasir({ products, customers = [], addTransaction, storeI
           </div>
           {/* Categories */}
           <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar -mx-1 px-1">
-            {CATEGORIES.map((c) => (
+            {categories.map((c) => (
               <button
                 key={c.id}
                 onClick={() => setCategory(c.id)}

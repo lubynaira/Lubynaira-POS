@@ -87,6 +87,10 @@ const productToDB = (p) => ({
   description: p.description || '', image: p.image || '',
 })
 
+const categoryFromDB = (r) => ({
+  id: r.id, label: r.label, icon: r.icon || '📦', sortOrder: Number(r.sort_order) || 0,
+})
+
 const trxFromDB = (r) => ({
   id: r.id,
   invoiceNo: r.invoice_no,
@@ -167,6 +171,7 @@ export function useStore() {
   const [transactions, setTransactions] = useState([])
   const [storeInfo, setStoreInfo] = useState(DEFAULT_STORE)
   const [admins, setAdmins] = useState([])
+  const [categories, setCategories] = useState([])
   const [customers, setCustomers] = useState([])
   const [debts, setDebts] = useState([])
   const [currentUser, setCurrentUser] = useState(() => loadSession())
@@ -187,7 +192,7 @@ export function useStore() {
   const refreshAll = useCallback(async () => {
     setLoading(true); setError(null)
     try {
-      const [s, a, p, t, c, d] = await Promise.all([
+      const [s, a, p, t, c, d, cat] = await Promise.all([
         supabase.from('settings').select('*').eq('id', 1).maybeSingle(),
         supabase.from('admins').select('*').order('created_at', { ascending: true }),
         supabase.from('products').select('*').order('created_at', { ascending: false }),
@@ -195,8 +200,11 @@ export function useStore() {
         supabase.from('transactions').select('*').order('created_at', { ascending: false }).limit(TRX_LIMIT),
         supabase.from('customers').select('*').order('created_at', { ascending: false }),
         supabase.from('debts').select('*').order('created_at', { ascending: false }).limit(DEBT_LIMIT),
+        supabase.from('categories').select('*').order('sort_order', { ascending: true }),
       ])
       for (const r of [s, a, p, t, c, d]) if (r.error) throw r.error
+      // categories opsional: DB lama mungkin belum punya tabelnya
+      if (!cat.error) setCategories((cat.data || []).map(categoryFromDB))
       if (!mounted.current) return
       setStoreInfo(settingsFromDB(s.data) || DEFAULT_STORE)
       const allAdmins = (a.data || []).map(adminFromDB)
@@ -256,6 +264,12 @@ export function useStore() {
     if (!e && mounted.current) setTransactions((data || []).map(trxFromDB))
   }, [])
 
+  const refreshCategories = useCallback(async () => {
+    const { data, error: e } = await supabase
+      .from('categories').select('*').order('sort_order', { ascending: true })
+    if (!e && mounted.current) setCategories((data || []).map(categoryFromDB))
+  }, [])
+
   // ─── Realtime subscriptions ───────────────────────────────────────
   // Satu channel, satu subscription. Setiap perubahan dipush ke handler
   // yang DI-DEBOUNCE: kalau payDebt mengupdate 4 tabel dalam 100ms, kita
@@ -274,6 +288,7 @@ export function useStore() {
       if (tables.includes('transactions')) refreshTransactions()
       if (tables.includes('debts'))         refreshDebts()
       if (tables.includes('customers'))     refreshCustomers()
+      if (tables.includes('categories'))    refreshCategories()
       if (tables.includes('products')) {
         // products jarang berubah; pakai inline query supaya tidak
         // butuh helper terpisah, dan tetap di-LIMIT.
@@ -301,6 +316,8 @@ export function useStore() {
         () => schedule('customers'))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'products' },
         () => schedule('products'))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'categories' },
+        () => schedule('categories'))
       .subscribe()
 
     return () => {
@@ -388,6 +405,45 @@ export function useStore() {
     if (mounted.current) setAdmins(prev => prev.filter(a => a.id !== id))
     return { ok: true }
   }), [admins, currentUser, wrap])
+
+  // ---------- CATEGORIES ----------
+  const slugifyCat = (str) => (str || '').toLowerCase().trim()
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+
+  const addCategory = useCallback(async (data) => wrap(async () => {
+    const label = (data.label || '').trim()
+    if (!label) return { ok: false, error: 'Nama kategori wajib diisi' }
+    const id = slugifyCat(data.id || label) || ('cat-' + Date.now())
+    const icon = (data.icon || '').trim() || '📦'
+    const sort_order = Number(data.sortOrder) || 0
+    const { data: row, error: e } = await supabase.from('categories')
+      .insert({ id, label, icon, sort_order }).select().single()
+    if (e) {
+      if (String(e.message).includes('duplicate')) return { ok: false, error: 'Kategori sudah ada' }
+      return { ok: false, error: e.message }
+    }
+    if (mounted.current) setCategories(prev => [...prev, categoryFromDB(row)])
+    return { ok: true }
+  }), [wrap])
+
+  const updateCategory = useCallback(async (id, patch) => wrap(async () => {
+    const upd = {}
+    if (patch.label !== undefined) upd.label = patch.label
+    if (patch.icon !== undefined) upd.icon = patch.icon
+    if (patch.sortOrder !== undefined) upd.sort_order = Number(patch.sortOrder) || 0
+    const { data: row, error: e } = await supabase.from('categories')
+      .update(upd).eq('id', id).select().single()
+    if (e) return { ok: false, error: e.message }
+    if (mounted.current) setCategories(prev => prev.map(c => c.id === id ? categoryFromDB(row) : c))
+    return { ok: true }
+  }), [wrap])
+
+  const deleteCategory = useCallback(async (id) => wrap(async () => {
+    const { error: e } = await supabase.from('categories').delete().eq('id', id)
+    if (e) return { ok: false, error: e.message }
+    if (mounted.current) setCategories(prev => prev.filter(c => c.id !== id))
+    return { ok: true }
+  }), [wrap])
 
   const changePassword = useCallback(async (oldPass, newPass) => wrap(async () => {
     if (!currentUser) return { ok: false, error: 'Belum login' }
@@ -1175,7 +1231,7 @@ export function useStore() {
   return {
     loading, busy, error,
     products, transactions, storeInfo, stats,
-    admins, currentUser, customers, debts,
+    admins, currentUser, customers, debts, categories,
     refreshAll, refreshCustomers, refreshDebts, refreshTransactions,
     syncDebtPaymentStatus, recalculateCustomerSummary, processDebtPayment,
     addProduct, updateProduct, deleteProduct,
@@ -1183,6 +1239,8 @@ export function useStore() {
     updateOrderStatus,
     updateStoreInfo, updateLogo,
     login, logout, addAdmin, deleteAdmin, changePassword,
+    addCategory, updateCategory, deleteCategory,
+    refreshCategories,
     addCustomer, updateCustomer, deleteCustomer,
     payDebt, deleteDebt, getDebtPayments,
   }

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import {
   Store, Image, Users, Lock, LogOut, ImagePlus,
   CheckCircle2, AlertCircle, UserPlus, Trash2, Crown,
-  Eye, EyeOff, Loader2,
+  Eye, EyeOff, Loader2, Tag, Plus,
 } from 'lucide-react'
 import Modal from './Modal'
 import { Input, Button } from './ui'
@@ -12,6 +12,7 @@ const TABS = [
   { id: 'toko', label: 'Toko', icon: Store },
   { id: 'logo', label: 'Logo', icon: Image },
   { id: 'admin', label: 'Admin', icon: Users },
+  { id: 'kategori', label: 'Kategori', icon: Tag },
   { id: 'password', label: 'Password', icon: Lock },
 ]
 
@@ -36,6 +37,7 @@ export default function Settings({
   storeInfo, admins, currentUser, busy,
   updateStoreInfo, updateLogo,
   addAdmin, deleteAdmin, changePassword, logout,
+  categories = [], addCategory, updateCategory, deleteCategory,
 }) {
   const [tab, setTab] = useState('toko')
   const [msg, setMsg] = useState(null)
@@ -131,6 +133,36 @@ export default function Settings({
       }
     } finally {
       setAddingAdmin(false)
+    }
+  }
+
+  // ─── Kategori ───
+  const [newCat, setNewCat] = useState({ label: '', icon: '' })
+  const [addingCat, setAddingCat] = useState(false)
+  const [deletingCatId, setDeletingCatId] = useState(null)
+
+  const handleAddCategory = async () => {
+    setAddingCat(true)
+    try {
+      const res = await addCategory(newCat)
+      if (res.ok) {
+        flash('success', `Kategori "${newCat.label}" ditambahkan`)
+        setNewCat({ label: '', icon: '' })
+      } else {
+        flash('error', res.error || 'Gagal menambah kategori')
+      }
+    } finally {
+      setAddingCat(false)
+    }
+  }
+
+  const handleDeleteCategory = async (id) => {
+    setDeletingCatId(id)
+    try {
+      const res = await deleteCategory(id)
+      if (!res.ok) flash('error', res.error || 'Gagal menghapus kategori')
+    } finally {
+      setDeletingCatId(null)
     }
   }
 
@@ -435,6 +467,68 @@ export default function Settings({
                 <Button variant="primary" className="w-full" onClick={handleAddAdmin} disabled={addingAdmin}>
                   {addingAdmin ? <Loader2 size={14} className="animate-spin" /> : <UserPlus size={14} />}
                   {addingAdmin ? 'Menyimpan...' : 'Tambah Admin'}
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* === KATEGORI === */}
+          {tab === 'kategori' && (
+            <div className="space-y-4 animate-fadeIn">
+              <div className="space-y-2">
+                {categories.length === 0 && (
+                  <div className="text-xs px-1 py-2" style={{ color: 'var(--text-muted)' }}>
+                    Belum ada kategori. Tambahkan di bawah — akan muncul di Kasir & form Produk.
+                  </div>
+                )}
+                {categories.map(c => {
+                  const isDeleting = deletingCatId === c.id
+                  return (
+                    <div key={c.id}
+                      className="flex items-center gap-3 p-3 rounded-xl"
+                      style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+                      <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
+                        style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>
+                        {c.icon || '📦'}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-semibold truncate" style={{ color: 'var(--text-primary)' }}>
+                          {c.label}
+                        </div>
+                        <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{c.id}</div>
+                      </div>
+                      <button
+                        onClick={() => handleDeleteCategory(c.id)}
+                        disabled={isDeleting}
+                        className="w-8 h-8 rounded-lg flex items-center justify-center btn-press disabled:opacity-60"
+                        style={{ background: 'rgba(255,77,106,0.08)', color: 'var(--red)', border: '1px solid rgba(255,77,106,0.15)' }}>
+                        {isDeleting ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
+                      </button>
+                    </div>
+                  )
+                })}
+              </div>
+
+              <div className="rounded-xl p-4"
+                style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+                <div className="text-xs font-semibold mb-3"
+                  style={{ color: 'var(--accent-light)', fontFamily: 'Syne', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                  ➕ Tambah Kategori Baru
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+                  <div className="sm:col-span-2">
+                    <Input label="Nama Kategori" value={newCat.label}
+                      onChange={e => setNewCat(p => ({ ...p, label: e.target.value }))}
+                      placeholder="cth: Hijab, Mug, Topi" />
+                  </div>
+                  <Input label="Icon (emoji)" value={newCat.icon}
+                    onChange={e => setNewCat(p => ({ ...p, icon: e.target.value }))}
+                    placeholder="📦" />
+                </div>
+                <Button variant="primary" className="w-full" onClick={handleAddCategory}
+                  disabled={addingCat || !newCat.label.trim()}>
+                  {addingCat ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+                  {addingCat ? 'Menyimpan...' : 'Tambah Kategori'}
                 </Button>
               </div>
             </div>

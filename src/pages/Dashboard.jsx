@@ -100,7 +100,7 @@ const CustomTooltip = ({ active, payload, label }) => {
   )
 }
 
-export default function Dashboard({ stats, transactions, debts = [], admins = [], setActivePage, storeInfo, currentUser }) {
+export default function Dashboard({ stats, transactions, debts = [], admins = [], setActivePage, storeInfo, currentUser, categories = CATEGORIES }) {
   // ─── Owner-only filter: admin dropdown + date range ───
   // - 'all'      → semua admin gabungan
   // - <adminId>  → hanya transaksi cashier_id == adminId
@@ -163,7 +163,7 @@ export default function Dashboard({ stats, transactions, debts = [], admins = []
     }).sort((a, b) => b.totalOmzet - a.totalOmzet)
   }, [admins, transactions, debts])
   const recentTrx = transactions.slice(0, 6)
-  const catLabel = (id) => CATEGORIES.find(c => c.id === id)?.label || id
+  const catLabel = (id) => categories.find(c => c.id === id)?.label || id
 
   const pieData = stats.categoryData.map((d) => ({ ...d, name: catLabel(d.name) }))
 

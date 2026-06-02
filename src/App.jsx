@@ -185,6 +185,11 @@ function AppShell() {
         return !linked || linked.cashierId === store.currentUser?.id
       })
 
+  // Kategori dinamis dari DB (fallback ke statis bila DB belum punya tabel categories)
+  const catsWithAll = store.categories && store.categories.length
+    ? [{ id: 'all', label: 'Semua', icon: '🎨' }, ...store.categories]
+    : undefined
+
   const pages = {
     dashboard: <Dashboard
       stats={store.stats}
@@ -194,6 +199,7 @@ function AppShell() {
       storeInfo={store.storeInfo}
       currentUser={store.currentUser}
       setActivePage={setActivePage}
+      categories={catsWithAll}
     />,
     kasir: <Kasir
       products={store.products}
@@ -201,6 +207,7 @@ function AppShell() {
       addTransaction={store.addTransaction}
       storeInfo={store.storeInfo}
       busy={store.busy}
+      categories={catsWithAll}
     />,
     produk: <Produk
       products={store.products}
@@ -208,6 +215,9 @@ function AppShell() {
       updateProduct={store.updateProduct}
       deleteProduct={store.deleteProduct}
       busy={store.busy}
+      categories={catsWithAll}
+      addCategory={store.addCategory}
+      deleteCategory={store.deleteCategory}
     />,
     order: <Order
       transactions={scopedTransactions}
@@ -310,6 +320,10 @@ function AppShell() {
         addAdmin={store.addAdmin}
         deleteAdmin={store.deleteAdmin}
         changePassword={store.changePassword}
+        categories={store.categories}
+        addCategory={store.addCategory}
+        updateCategory={store.updateCategory}
+        deleteCategory={store.deleteCategory}
         logout={() => { setSettingsOpen(false); store.logout() }}
       />
     </div>

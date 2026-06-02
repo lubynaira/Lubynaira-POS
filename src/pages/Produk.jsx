@@ -24,7 +24,7 @@ const CAT_COLOR = {
   kaos: 'green', hoodie: 'accent', banner: 'red',
 }
 
-export default function Produk({ products, addProduct, updateProduct, deleteProduct, busy }) {
+export default function Produk({ products, addProduct, updateProduct, deleteProduct, busy, categories = CATEGORIES, addCategory, deleteCategory }) {
   const [search, setSearch] = useState('')
   const [filterCat, setFilterCat] = useState('all')
   const [modalOpen, setModalOpen] = useState(false)
@@ -36,6 +36,9 @@ export default function Produk({ products, addProduct, updateProduct, deleteProd
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [submitError, setSubmitError] = useState('')
+  const [showCatMgr, setShowCatMgr] = useState(false)
+  const [newCat, setNewCat] = useState({ label: '', icon: '' })
+  const [catBusy, setCatBusy] = useState(false)
 
   const filtered = useMemo(() => {
     return products.filter((p) => {
@@ -48,10 +51,41 @@ export default function Produk({ products, addProduct, updateProduct, deleteProd
 
   const openAdd = () => {
     setEditId(null)
-    setForm(EMPTY_FORM)
+    const firstCat = categories.filter((c) => c.id !== 'all')[0]?.id
+    setForm({ ...EMPTY_FORM, category: firstCat || EMPTY_FORM.category })
     setImagePreview('')
     setErrors({})
     setModalOpen(true)
+  }
+
+  const handleAddCat = async () => {
+    if (!newCat.label.trim() || !addCategory) return
+    setCatBusy(true)
+    try {
+      const res = await addCategory(newCat)
+      if (res.ok) {
+        setNewCat({ label: '', icon: '' })
+        setSubmitError('')
+      } else {
+        setSubmitError(res.error || 'Gagal menambah kategori')
+      }
+    } finally { setCatBusy(false) }
+  }
+
+  const handleDeleteCat = async (id) => {
+    if (!deleteCategory) return
+    setCatBusy(true)
+    try {
+      const res = await deleteCategory(id)
+      if (res.ok) {
+        if (form.category === id) {
+          const remaining = categories.filter((c) => c.id !== 'all' && c.id !== id)
+          setForm((p) => ({ ...p, category: remaining[0]?.id || '' }))
+        }
+      } else {
+        setSubmitError(res.error || 'Gagal menghapus kategori')
+      }
+    } finally { setCatBusy(false) }
   }
 
   const openEdit = (p) => {
@@ -130,7 +164,7 @@ export default function Produk({ products, addProduct, updateProduct, deleteProd
     }
   }
 
-  const catLabels = Object.fromEntries(CATEGORIES.map((c) => [c.id, c]))
+  const catLabels = Object.fromEntries(categories.map((c) => [c.id, c]))
   const margin = (p) =>
     p.modal > 0 && p.price > 0 ? Math.round(((p.price - p.modal) / p.price) * 100) : 0
 
@@ -173,7 +207,7 @@ export default function Produk({ products, addProduct, updateProduct, deleteProd
             />
           </div>
           <div className="flex gap-2 flex-wrap">
-            {CATEGORIES.map((c) => (
+            {categories.map((c) => (
               <button
                 key={c.id}
                 onClick={() => setFilterCat(c.id)}
@@ -401,12 +435,84 @@ export default function Produk({ products, addProduct, updateProduct, deleteProd
             value={form.category}
             onChange={(e) => setForm((p) => ({ ...p, category: e.target.value }))}
           >
-            {CATEGORIES.filter((c) => c.id !== 'all').map((c) => (
+            {categories.filter((c) => c.id !== 'all').map((c) => (
               <option key={c.id} value={c.id}>
                 {c.icon} {c.label}
               </option>
             ))}
           </Select>
+
+          {(addCategory || deleteCategory) && (
+            <div className="-mt-1">
+              <button
+                type="button"
+                onClick={() => setShowCatMgr((v) => !v)}
+                className="text-xs font-semibold btn-press"
+                style={{ color: 'var(--accent-light)' }}
+              >
+                {showCatMgr ? '× Tutup kelola kategori' : '+ Tambah / hapus kategori'}
+              </button>
+
+              {showCatMgr && (
+                <div
+                  className="mt-2 rounded-xl p-3 space-y-3"
+                  style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+                >
+                  {addCategory && (
+                    <div className="flex gap-2">
+                      <input
+                        value={newCat.icon}
+                        onChange={(e) => setNewCat((p) => ({ ...p, icon: e.target.value }))}
+                        placeholder="📦"
+                        className="w-14 px-2 py-2 rounded-lg text-sm text-center"
+                        style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
+                      />
+                      <input
+                        value={newCat.label}
+                        onChange={(e) => setNewCat((p) => ({ ...p, label: e.target.value }))}
+                        placeholder="Nama kategori baru"
+                        className="flex-1 px-3 py-2 rounded-lg text-sm"
+                        style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAddCat}
+                        disabled={catBusy || !newCat.label.trim()}
+                        className="px-3 py-2 rounded-lg text-xs font-semibold btn-press disabled:opacity-60 flex items-center"
+                        style={{ background: 'var(--accent)', color: '#fff' }}
+                      >
+                        <Plus size={14} />
+                      </button>
+                    </div>
+                  )}
+
+                  {deleteCategory && (
+                    <div className="space-y-1.5 max-h-40 overflow-y-auto">
+                      {categories.filter((c) => c.id !== 'all').map((c) => (
+                        <div
+                          key={c.id}
+                          className="flex items-center gap-2 px-2 py-1.5 rounded-lg"
+                          style={{ background: 'var(--bg-elevated)' }}
+                        >
+                          <span className="text-base">{c.icon || '📦'}</span>
+                          <span className="flex-1 text-sm truncate" style={{ color: 'var(--text-primary)' }}>{c.label}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteCat(c.id)}
+                            disabled={catBusy}
+                            className="w-7 h-7 rounded-lg flex items-center justify-center btn-press disabled:opacity-60"
+                            style={{ background: 'rgba(255,77,106,0.08)', color: 'var(--red)', border: '1px solid rgba(255,77,106,0.15)' }}
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-3">
             <div>
