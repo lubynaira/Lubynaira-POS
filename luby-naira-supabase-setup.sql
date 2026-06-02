@@ -1308,3 +1308,44 @@ NOTIFY pgrst, 'reload schema';
 --   • customers.total_spent + total_transactions akurat
 -- =====================================================================
 
+
+-- ================================================================
+-- >>> BAGIAN: [10] AKSES BACA settings UNTUK anon + authenticated
+-- ================================================================
+-- Memastikan tabel `settings` (nama toko, logo, bank, dll) bisa dibaca
+-- baik oleh user anon (belum login) maupun authenticated (sudah login),
+-- dan tetap bisa di-update dari halaman Settings aplikasi.
+-- Idempotent & aman dijalankan ulang.
+
+-- 1) Table-level privileges
+GRANT USAGE ON SCHEMA public TO anon, authenticated;
+GRANT SELECT, INSERT, UPDATE ON public.settings TO anon, authenticated;
+
+-- 2) Pastikan RLS aktif
+ALTER TABLE public.settings ENABLE ROW LEVEL SECURITY;
+
+-- 3) Policy SELECT eksplisit untuk anon + authenticated
+DO $$ BEGIN
+  CREATE POLICY "settings read anon+auth"
+    ON public.settings
+    FOR SELECT
+    TO anon, authenticated
+    USING (true);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- 4) Policy WRITE (insert/update) untuk anon + authenticated
+--    (aplikasi menyimpan perubahan toko tanpa sesi auth Supabase)
+DO $$ BEGIN
+  CREATE POLICY "settings write anon+auth"
+    ON public.settings
+    FOR ALL
+    TO anon, authenticated
+    USING (true)
+    WITH CHECK (true);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- 5) Pastikan baris settings default (id=1) selalu ada
+INSERT INTO public.settings (id, name, tagline)
+VALUES (1, 'Luby Naira', 'Cetak Custom Produkmu Disini!!!')
+ON CONFLICT (id) DO NOTHING;
+-- ================================================================
