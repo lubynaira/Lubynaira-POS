@@ -92,7 +92,6 @@ export function SettingsPanel({ userId }: SettingsPanelProps) {
             <div className="flex items-center gap-4">
               <div className="h-24 w-24 overflow-hidden border border-line bg-canvas">
                 {logoUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
                   <img src={logoUrl} alt="" className="h-full w-full object-cover" />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center text-xs font-semibold text-muted">
@@ -147,7 +146,6 @@ export function SettingsPanel({ userId }: SettingsPanelProps) {
           <div className="flex items-center gap-4">
             <div className="flex h-16 w-16 items-center justify-center overflow-hidden border border-line bg-panel">
               {logoUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
                 <img src={logoUrl} alt="" className="h-full w-full object-cover" />
               ) : (
                 <Palette className="h-6 w-6 text-accent" aria-hidden />

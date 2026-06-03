@@ -144,7 +144,6 @@ export function HistoryPanel({ userId }: HistoryPanelProps) {
             <article key={product.id} className="app-panel grid gap-4 p-4 lg:grid-cols-[72px_1fr_auto] lg:items-center">
               <div className="h-[72px] w-[72px] overflow-hidden border border-line bg-canvas">
                 {product.photo_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
                   <img src={product.photo_url} alt="" className="h-full w-full object-cover" />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center text-xs font-semibold text-muted">

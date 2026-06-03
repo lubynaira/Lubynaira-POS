@@ -184,7 +184,6 @@ export function ResultPanel({ product, fabricCost }: ResultPanelProps) {
             <div className="flex items-start gap-4">
               <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden border border-line bg-panel">
                 {product.photo_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
                   <img src={product.photo_url} alt="" className="h-full w-full object-cover" />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center text-xs font-semibold text-muted">

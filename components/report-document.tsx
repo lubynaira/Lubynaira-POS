@@ -247,7 +247,6 @@ function ImageBox({
       }}
     >
       {src ? (
-        // eslint-disable-next-line @next/next/no-img-element
         <img src={src} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
       ) : (
         <span style={{ color: muted, fontSize: 22, fontWeight: 800, textAlign: "center", padding: 18 }}>{fallback}</span>

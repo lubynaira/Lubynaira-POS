@@ -648,7 +648,6 @@ function BrandCombobox({ brands, value, onSelect }: { brands: Brand[]; value: st
                 >
                   <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden border border-line bg-canvas text-accent">
                     {brand.logo_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
                       <img src={brand.logo_url} alt="" className="h-full w-full object-cover" />
                     ) : (
                       <Building2 className="h-4 w-4" aria-hidden />
@@ -688,7 +687,6 @@ function LogoDropzone({
       }}
     >
       {value ? (
-        // eslint-disable-next-line @next/next/no-img-element
         <img src={value} alt="" className="mb-3 h-20 w-20 border border-line object-cover" />
       ) : (
         <Building2 className="mb-3 h-8 w-8 text-accent" aria-hidden />
@@ -807,7 +805,6 @@ function PhotoDropzone({
       }}
     >
       {value ? (
-        // eslint-disable-next-line @next/next/no-img-element
         <img src={value} alt="" className="mb-3 h-24 w-24 border border-line object-cover" />
       ) : (
         <ImageIcon className="mb-3 h-8 w-8 text-muted" aria-hidden />

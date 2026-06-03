@@ -125,7 +125,6 @@ export function ProductDetailPage({ productId }: { productId: string }) {
 
         <section className="app-panel overflow-hidden">
           {product.photo_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
             <img src={product.photo_url} alt="" className="h-full min-h-80 w-full object-cover" />
           ) : (
             <div className="flex min-h-80 items-center justify-center text-sm font-semibold text-muted">Foto Produk</div>

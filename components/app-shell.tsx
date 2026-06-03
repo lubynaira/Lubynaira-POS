@@ -203,7 +203,6 @@ export function AppShell() {
             <div className="flex items-center gap-3">
               <div className="soft-grid flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-accent/60 bg-canvas text-accent">
                 {settings.logo_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
                   <img src={settings.logo_url} alt="" className="h-full w-full object-cover" />
                 ) : (
                   <Palette className="h-4 w-4" aria-hidden />

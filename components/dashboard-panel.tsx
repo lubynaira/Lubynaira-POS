@@ -35,7 +35,6 @@ export function DashboardPanel() {
             <div className="grid gap-5 lg:grid-cols-[160px_1fr_auto] lg:items-center">
               <div className="soft-grid flex aspect-square w-full max-w-40 items-center justify-center overflow-hidden border border-line bg-canvas">
                 {latestHpp.photo_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
                   <img src={latestHpp.photo_url} alt="" className="h-full w-full object-cover" />
                 ) : (
                   <span className="text-sm font-semibold text-muted">Foto Produk</span>

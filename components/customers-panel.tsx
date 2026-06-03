@@ -219,7 +219,6 @@ export function CustomersPanel({ userId }: { userId?: string }) {
             >
               <div className="soft-grid flex h-20 w-24 items-center justify-center overflow-hidden border border-line bg-canvas">
                 {customer.logo_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
                   <img src={customer.logo_url} alt="" className="h-full w-full object-cover" />
                 ) : (
                   <Building2 className="h-6 w-6 text-accent" aria-hidden />
@@ -269,7 +268,6 @@ function LogoDropzone({
       }}
     >
       {value ? (
-        // eslint-disable-next-line @next/next/no-img-element
         <img src={value} alt="" className="mb-3 h-24 w-24 border border-line object-cover" />
       ) : (
         <Upload className="mb-3 h-8 w-8 text-accent" aria-hidden />
