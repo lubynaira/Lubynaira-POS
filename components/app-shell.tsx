@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import {
   Calculator,
@@ -32,18 +33,31 @@ import { isSupabaseConfigured, supabase } from "@/lib/supabase";
 import { useHppStore } from "@/lib/store";
 import type { AppView, Brand, Customer } from "@/types/product";
 
-const navItems: Array<{ id: AppView; label: string; icon: typeof Calculator }> = [
-  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { id: "customers", label: "Customers", icon: UsersRound },
-  { id: "calculator", label: "HPP", icon: ClipboardList },
-  { id: "models", label: "Model Barang", icon: Shirt },
-  { id: "conversion", label: "Konversi", icon: Calculator },
-  { id: "kalkulator", label: "Kalkulator", icon: Calculator },
-  { id: "settings", label: "Pengaturan", icon: Settings }
+const navItems: Array<{ id: AppView; label: string; icon: typeof Calculator; path: string }> = [
+  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
+  { id: "customers", label: "Customers", icon: UsersRound, path: "/customers" },
+  { id: "calculator", label: "HPP", icon: ClipboardList, path: "/hpp" },
+  { id: "models", label: "Model Barang", icon: Shirt, path: "/model-barang" },
+  { id: "conversion", label: "Konversi", icon: Calculator, path: "/konversi" },
+  { id: "kalkulator", label: "Kalkulator", icon: Calculator, path: "/kalkulator" },
+  { id: "settings", label: "Pengaturan", icon: Settings, path: "/pengaturan" }
 ];
+
+const pathToView: Record<string, AppView> = {
+  "/": "dashboard",
+  "/dashboard": "dashboard",
+  "/customers": "customers",
+  "/hpp": "calculator",
+  "/model-barang": "models",
+  "/konversi": "conversion",
+  "/kalkulator": "kalkulator",
+  "/pengaturan": "settings"
+};
 
 export function AppShell() {
   usePwa();
+  const router = useRouter();
+  const pathname = usePathname();
   const { ready: themeReady, theme, toggleTheme } = useThemeMode();
   const { activeView, setActiveView, setProducts, setCustomers, setBrands, settings, setSettings, role, setRole } = useHppStore();
   const [user, setUser] = useState<User | null>(null);
@@ -63,23 +77,35 @@ export function AppShell() {
   }, []);
 
   useEffect(() => {
-    if (window.location.pathname === "/kalkulator") {
-      setActiveView("kalkulator");
+    const normalizedPath = pathname.toLowerCase();
+    const routeView = pathToView[normalizedPath];
+    if (routeView) {
+      setActiveView(routeView);
       return;
     }
-    if (window.location.pathname === "/Customers" || window.location.pathname === "/customers") {
-      setActiveView("customers");
+
+    if (pathname === "/Customers") {
+      router.replace("/customers");
       return;
     }
+
     const view = new URLSearchParams(window.location.search).get("view");
     if (view === "history" || view === "riwayat" || view === "converter") {
       setActiveView("conversion");
+      router.replace("/konversi");
       return;
     }
-    if (view && navItems.some((item) => item.id === view)) {
-      setActiveView(view as AppView);
+    const item = navItems.find((navItem) => navItem.id === view);
+    if (item) {
+      setActiveView(item.id);
+      router.replace(item.path);
     }
-  }, [setActiveView]);
+  }, [pathname, router, setActiveView]);
+
+  function navigateTo(item: { id: AppView; path: string }) {
+    setActiveView(item.id);
+    router.push(item.path);
+  }
 
   const loadRemoteData = useCallback(async (userId: string) => {
     if (!supabase) return;
@@ -172,7 +198,7 @@ export function AppShell() {
     <div className="min-h-screen p-4 text-ink">
       <div className="mx-auto flex min-h-[calc(100vh-2rem)] max-w-[1500px] overflow-hidden border border-line bg-black/55 shadow-[0_24px_80px_rgb(0_0_0/0.45)] backdrop-blur">
         <aside className="hidden w-[204px] shrink-0 border-r border-line bg-panel/70 lg:flex lg:flex-col">
-          <button className="flex items-center gap-3 px-6 py-6 text-left" onClick={() => setActiveView("dashboard")}>
+          <button className="flex items-center gap-3 px-6 py-6 text-left" onClick={() => navigateTo(navItems[0])}>
             <div className="flex h-9 w-9 items-center justify-center border border-accent text-accent">
               <Palette className="h-5 w-5" aria-hidden />
             </div>
@@ -198,7 +224,7 @@ export function AppShell() {
                   }
                   disabled={disabled}
                   title={disabled ? "Hanya owner" : item.label}
-                  onClick={() => setActiveView(item.id)}
+                  onClick={() => navigateTo(item)}
                 >
                   <Icon className="h-4 w-4" aria-hidden />
                   {item.label}
@@ -247,7 +273,7 @@ export function AppShell() {
             {navItems.map((item) => {
               const Icon = item.icon;
               return (
-                <Button key={item.id} variant={activeView === item.id ? "primary" : "secondary"} size="sm" onClick={() => setActiveView(item.id)}>
+                <Button key={item.id} variant={activeView === item.id ? "primary" : "secondary"} size="sm" onClick={() => navigateTo(item)}>
                   <Icon className="h-4 w-4" aria-hidden />
                   {item.label}
                 </Button>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useFieldArray, useForm } from "react-hook-form";
 import type { UseFormRegisterReturn } from "react-hook-form";
 import { toBlob } from "html-to-image";
@@ -32,6 +33,7 @@ interface HppFormProps {
 type OptionalCostField = "accessory_cost" | "label_cost" | "shipping_cost" | "other_cost";
 
 export function HppForm({ userId }: HppFormProps) {
+  const router = useRouter();
   const {
     addProduct,
     updateProduct,
@@ -302,7 +304,15 @@ export function HppForm({ userId }: HppFormProps) {
               <h1 className="text-2xl font-bold text-ink">HPP</h1>
               <p className="mt-2 text-sm text-muted">Home &gt; HPP &gt; Buat HPP Baru</p>
             </div>
-            <Button type="button" variant="secondary" size="sm" onClick={() => setActiveView("conversion")}>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                setActiveView("conversion");
+                router.push("/konversi");
+              }}
+            >
               <Calculator className="h-4 w-4" aria-hidden />
               Buka Konversi
             </Button>

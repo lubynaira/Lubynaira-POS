@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { ClipboardList, Layers3, Plus, Shirt, UserRound, UsersRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +8,8 @@ import { formatRupiah } from "@/lib/calculations";
 import { useHppStore } from "@/lib/store";
 
 export function DashboardPanel() {
-  const products = useHppStore((state) => state.products);
+  const router = useRouter();
+  const products = useHppStore((state) => (Array.isArray(state.products) ? state.products : []));
   const setActiveView = useHppStore((state) => state.setActiveView);
   const totalModels = new Set(products.map((product) => product.product_code || product.product_name).filter(Boolean)).size;
   const totalHpp = products.length;
@@ -75,17 +77,26 @@ export function DashboardPanel() {
         <QuickAction
           icon={Plus}
           label="Buat HPP Baru"
-          onClick={() => setActiveView("calculator")}
+          onClick={() => {
+            setActiveView("calculator");
+            router.push("/hpp");
+          }}
         />
         <QuickAction
           icon={Layers3}
           label="Daftar Model Barang"
-          onClick={() => setActiveView("models")}
+          onClick={() => {
+            setActiveView("models");
+            router.push("/model-barang");
+          }}
         />
         <QuickAction
           icon={UsersRound}
           label="Daftar Customer"
-          onClick={() => setActiveView("customers")}
+          onClick={() => {
+            setActiveView("customers");
+            router.push("/customers");
+          }}
         />
       </section>
     </div>
