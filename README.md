@@ -1,199 +1,138 @@
-# 🖨️ Luby Naira POS — Enterprise Printing POS
+# Skupy HPP Gamis
 
-Aplikasi kasir (POS) modern premium untuk usaha printing — luxury dark UI, glassmorphism, **fully responsive (desktop + iPad + iPhone)**, backed by Supabase.
+Aplikasi web SaaS profesional untuk menghitung Harga Pokok Produksi (HPP) gamis, dress, tunik, dan fashion muslimah. Halaman awal langsung membuka form perhitungan HPP, lalu menyediakan dashboard, riwayat, converter yard-meter, export laporan, share WhatsApp, auth Supabase, dan PWA.
 
-## ✨ Tech Stack
-- **React 18** + **Vite 5**
-- **Tailwind CSS 3** (+ Framer Motion)
-- **Lucide React** (icons)
-- **Recharts** (charts)
-- **Supabase** (Postgres + Storage + Realtime)
-- **xlsx** (professional Excel export)
-- **html2canvas** (invoice → JPEG for WhatsApp)
+## Fitur
 
-## 🆕 What's new (v3)
-- **Customers** module — CRUD + statistics + transaction history
-- **Piutang/Hutang** module — payment recording, due-date tracking, reminders
-- **WhatsApp direct-chat** — reusable button with templates: Chat / Reminder / Invoice
-- **Hutang/Tempo** as 4th payment method (auto creates debt entry)
-- **Professional Excel export** with logo, currency formatting, totals row
-- **Bottom nav** for iPhone/Android feel
-- **Toast** notifications
-- **Realtime updates** via Supabase channels
+- Kalkulator HPP realtime untuk bahan, printing, jahit, aksesoris, label, pengiriman, dan biaya lain.
+- Kalkulator harga jual dengan margin 20%, 30%, 40%, 50%, dan custom.
+- Upload logo brand dan foto produk ke Supabase Storage.
+- Dashboard sederhana untuk total model, total HPP, HPP terakhir, dan quick action.
+- Riwayat perhitungan dengan search, filter tanggal, edit, hapus, dan duplikasi.
+- Converter Yard ke Meter dan Meter ke Yard.
+- Export laporan profesional PNG, PDF, dan Excel.
+- Share WhatsApp dengan PNG otomatis dan pesan terisi.
+- Supabase Auth dengan role Owner dan Staff.
+- Pengaturan brand, warna tema, dark mode, light mode.
+- PWA installable untuk Android, iPhone, dan desktop.
 
----
+## Teknologi
 
-## 🚀 Setup
+- Next.js 15 App Router
+- TypeScript
+- Tailwind CSS
+- Shadcn-style UI components
+- Supabase Database, Auth, dan Storage
+- React Hook Form
+- Zustand
+- html-to-image
+- jsPDF
+- XLSX
+- qrcode.react
 
-### 1. Buat project Supabase
-1. Daftar / login di [supabase.com](https://supabase.com)
-2. Klik **New Project**, pilih region (Singapore disarankan)
-3. Tunggu sampai project siap (sekitar 2 menit)
+## Menjalankan Lokal
 
-### 2. Jalankan SQL schema
-1. Buka **SQL Editor** → **New query**
-2. Copy isi file [`supabase/schema.sql`](./supabase/schema.sql) → paste → klik **Run**
-3. Akan otomatis dibuat:
-   - Tabel `settings`, `admins`, `products`, `transactions`
-   - Storage bucket `logos` (public)
-   - RLS policies + seed data (admin default, info toko, dummy products)
-
-### 3. Konfigurasi environment
-1. Buka **Project Settings → API**, salin:
-   - `Project URL` (https://xxxxx.supabase.co)
-   - `anon` `public` key
-2. Di root project, copy `.env.example` → `.env`:
-   ```bash
-   cp .env.example .env
-   ```
-3. Isi:
-   ```
-   VITE_SUPABASE_URL=https://xxxxx.supabase.co
-   VITE_SUPABASE_ANON_KEY=eyJhbGciOi...
-   ```
-
-### 4. Install & jalankan
 ```bash
 npm install
 npm run dev
 ```
-→ Buka `http://localhost:5173`
-→ Login dengan **username: `admin`** · **password: `admin`**
 
-### 5. Deploy ke Vercel
-1. Push ke GitHub
-2. Buka [vercel.com](https://vercel.com) → New Project → Import repo
-3. **Penting:** di tab Environment Variables, tambahkan:
-   - `VITE_SUPABASE_URL`
-   - `VITE_SUPABASE_ANON_KEY`
-4. Deploy → selesai 🎉
+Buka `http://localhost:3000`.
 
----
+Tanpa environment Supabase, aplikasi berjalan dalam mode demo lokal dengan penyimpanan `localStorage`. Untuk produksi, isi environment Supabase.
 
-## 🎯 Fitur
+## Environment Variable
 
-### Dashboard
-- Statistik total omzet, omzet hari ini, pending order, total pelanggan
-- Grafik penjualan 7 hari (area + bar chart)
-- Distribusi kategori (pie chart)
-- Produk terlaris + transaksi terbaru
-- Banner welcome dengan logo Naira
+Buat `.env.local` dari `.env.example`.
 
-### Kasir (POS)
-- 3-column: sidebar – produk – cart
-- Search realtime + filter kategori (search/filter di sisi client)
-- Cart dengan qty +/-, hapus item
-- Subtotal, diskon (nominal/persen), total otomatis
-- 3 metode pembayaran: Cash, Transfer, QRIS
-- DP & sisa pembayaran (auto status `pending`)
-- Stok produk otomatis di-decrement di Supabase
-- Checkout async dengan loading + error state
-- Print + Share invoice langsung
-
-### Produk
-- CRUD lengkap (`products` table di Supabase)
-- Upload foto via URL atau base64
-- Modal form premium dengan validasi
-- Statistik stok (nilai stok, stok menipis, stok habis)
-
-### Order
-- Daftar transaksi (table desktop / card mobile) dari Supabase
-- Filter status: pending / proses / selesai / lunas
-- Search by customer / invoice
-- Tambah pembayaran (cicilan)
-- **Export Excel** dengan filter range tanggal / per bulan
-- Detail order modal + invoice
-
-### Invoice (Modern, A4)
-- Logo Naira / custom logo dari Supabase Storage
-- Status badge berwarna
-- Kartu From / To / Detail
-- Tabel item premium
-- **Rekening bank pakai font Bree Serif** (highlight di box hitam)
-- Summary card dengan total + DP/sisa
-- **Tombol Share via WhatsApp sebagai JPEG** (bukan teks):
-  - Mobile / browser support: Web Share API native dengan file → langsung pilih WhatsApp
-  - Fallback: download JPEG + buka WhatsApp Web dengan caption (user attach manual)
-- Tombol Download JPEG terpisah
-- Print A4 friendly (`@page size: A4`)
-
-### Pengaturan (gear icon di kiri-bawah)
-Tab-tab di modal Settings:
-- **Toko** — ubah nama, tagline, alamat, no HP, rekening bank → save ke `settings` table
-- **Logo** — upload logo depan & invoice → file di-upload ke Supabase Storage bucket `logos`, URL publik disimpan di `settings`
-- **Admin** — daftar admin dari `admins` table, tambah baru, hapus (kecuali diri sendiri)
-- **Password** — ganti password current user
-- **Logout** button (merah, sticky)
-
-### Authentication
-- Login screen dengan validasi via Supabase
-- Default admin: `admin` / `admin` (di-seed otomatis)
-- Session di-keep dalam memory (refresh = login ulang, no localStorage)
-- Loading splash saat fetch awal dari Supabase
-- Error screen jika koneksi gagal (dengan instruksi setup)
-
----
-
-## 🗄️ Database Schema
-
-| Table        | Fields                                                                              |
-|--------------|-------------------------------------------------------------------------------------|
-| `settings`   | id=1 (single row), name, tagline, address, phone, email, bank_*, front_logo, invoice_logo, tax_rate |
-| `admins`     | id (uuid), username (unique), password, name, role (owner/staff), created_at        |
-| `products`   | id, name, category, price, modal, stock, description, image, created_at             |
-| `transactions` | id, invoice_no (unique), customer, items (jsonb), subtotal, discount, tax, total, paid, dp, remaining, payment_method, status, created_at |
-
-Storage bucket `logos` (public) menyimpan file logo yang di-upload.
-
-⚠️ **Security note:** schema demo pakai RLS permissive (anon punya akses CRUD) dan password plain text. Untuk produksi, gunakan Supabase Auth + hash password (bcrypt/argon2) + RLS yang ketat.
-
----
-
-## 🗂️ Struktur Folder
+```bash
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
-src/
-  lib/
-    supabase.js         # Supabase client + storage helpers
-  components/
-    Header.jsx          # Top bar
-    Sidebar.jsx         # Sidebar + Settings button
-    Modal.jsx           # Reusable modal
-    Invoice.jsx         # A4 invoice + html2canvas WhatsApp share
-    Settings.jsx        # Modal: Toko, Logo, Admin, Password, Logout
-    Logo.jsx            # SVG + custom upload support
-    ui.jsx              # Input, Button, Badge, EmptyState, ProductImage
-  pages/
-    Dashboard.jsx
-    Kasir.jsx
-    Produk.jsx
-    Order.jsx           # + Excel export
-    Login.jsx
-  hooks/
-    useStore.js         # Async Supabase data layer (loading/error/busy state)
-  data/
-    dummyData.js        # Categories, payment methods, fallback constants
-  utils/
-    helpers.js          # formatRupiah, CSV export, etc.
-  App.jsx               # Splash loader + error screen + route gate
-  main.jsx
-  index.css
+
+Di Vercel, masukkan variable yang sama pada Project Settings > Environment Variables.
+
+## Setup Supabase
+
+1. Buat project baru di Supabase.
+2. Buka SQL Editor.
+3. Jalankan seluruh isi `supabase/schema.sql`.
+4. Pastikan Auth Email aktif.
+5. Storage bucket `brand-assets` dan `product-photos` akan dibuat otomatis oleh SQL.
+6. Copy Project URL dan anon public key ke `.env.local` atau Vercel.
+
+SQL membuat:
+
+- `profiles`
+- `brand_settings`
+- `products`
+- trigger profile saat user baru dibuat
+- Row Level Security
+- policies Owner/Staff
+- bucket Storage untuk logo dan foto produk
+
+## Role
+
+- Owner: input, lihat data, edit, hapus, export, pengaturan brand.
+- Staff: input dan lihat data, tanpa akses hapus atau pengaturan.
+
+## Export
+
+PNG dan PDF memakai layout laporan yang sama:
+
+- Instagram Portrait 1080x1350
+- Landscape 1920x1080
+- A4 1240x1754
+
+Excel berisi kolom:
+
+- Tanggal
+- Kode Produk
+- Nama Produk
+- HPP
+- Margin
+- Harga Jual
+- Profit
+
+## Upload ke GitHub
+
+```bash
+git init
+git add .
+git commit -m "Initial Skupy HPP Gamis app"
+git branch -M main
+git remote add origin https://github.com/username/skupy-hpp-gamis.git
+git push -u origin main
+```
+
+## Deploy ke Vercel
+
+1. Login ke Vercel.
+2. Import repository GitHub.
+3. Pilih framework Next.js.
+4. Tambahkan environment variable Supabase.
+5. Deploy.
+
+Build command:
+
+```bash
+npm run build
+```
+
+Output directory mengikuti default Next.js.
+
+## Struktur Project
+
+```text
+app/
+components/
+hooks/
+lib/
+public/
+styles/
 supabase/
-  schema.sql            # CREATE TABLE + seed
-.env.example
+types/
 ```
 
----
-
-## 🐛 Troubleshooting
-
-**"Tidak dapat terhubung ke Supabase"** → cek `.env`, pastikan URL & key benar, dan SQL sudah dijalankan.
-
-**Login gagal** → cek tabel `admins` di Supabase, harus ada row username=`admin` password=`admin`.
-
-**Logo tidak muncul setelah upload** → cek bucket `logos` di Supabase Dashboard → Storage. Pastikan public access enabled.
-
-**WhatsApp share buka tab kosong** → di desktop browser tanpa Web Share API support, fallback akan download JPEG dan buka WhatsApp Web — user perlu attach JPEG manual.
-
----
-
-Made with ❤️ for printing studios.
+Project siap dikembangkan, dipush ke GitHub, dan dideploy ke Vercel.

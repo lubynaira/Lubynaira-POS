@@ -1,0 +1,26 @@
+{
+  "name": "Skupy HPP Gamis",
+  "short_name": "Skupy HPP",
+  "description": "Kalkulator HPP profesional untuk gamis, dress, tunik, dan fashion muslimah.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#030405",
+  "theme_color": "#cb9e36",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["business", "productivity", "finance"],
+  "lang": "id-ID"
+}
