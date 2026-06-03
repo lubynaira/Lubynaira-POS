@@ -12,7 +12,7 @@ import { useHppStore } from "@/lib/store";
 import type { Customer } from "@/types/product";
 
 export function CustomersPanel({ userId }: { userId?: string }) {
-  const customers = useHppStore((state) => state.customers ?? []);
+  const customers = useHppStore((state) => (Array.isArray(state.customers) ? state.customers : []));
   const addCustomer = useHppStore((state) => state.addCustomer);
   const removeCustomer = useHppStore((state) => state.removeCustomer);
   const [query, setQuery] = useState("");
@@ -28,11 +28,12 @@ export function CustomersPanel({ userId }: { userId?: string }) {
   const [message, setMessage] = useState("");
 
   const filteredCustomers = useMemo(() => {
+    const safeCustomers = Array.isArray(customers) ? customers : [];
     const needle = query.trim().toLowerCase();
-    if (!needle) return customers;
+    if (!needle) return safeCustomers;
 
-    return customers.filter((customer) =>
-      [customer.customer_name, customer.phone, customer.whatsapp, customer.address]
+    return safeCustomers.filter((customer) =>
+      [customer?.customer_name, customer?.phone, customer?.whatsapp, customer?.address]
         .join(" ")
         .toLowerCase()
         .includes(needle)
@@ -208,7 +209,7 @@ export function CustomersPanel({ userId }: { userId?: string }) {
         {filteredCustomers.length === 0 ? (
           <div className="soft-grid flex min-h-72 flex-col items-center justify-center p-6 text-center">
             <Building2 className="mb-4 h-10 w-10 text-accent" aria-hidden />
-            <h2 className="text-lg font-semibold text-ink">Belum ada customer</h2>
+            <h2 className="text-lg font-semibold text-ink">Belum ada customer / brand</h2>
             <p className="mt-2 max-w-md text-sm text-muted">Tambahkan customer, lalu buat brand dari form HPP.</p>
           </div>
         ) : (

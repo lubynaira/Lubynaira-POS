@@ -67,6 +67,10 @@ export function AppShell() {
       setActiveView("kalkulator");
       return;
     }
+    if (window.location.pathname === "/Customers" || window.location.pathname === "/customers") {
+      setActiveView("customers");
+      return;
+    }
     const view = new URLSearchParams(window.location.search).get("view");
     if (view === "history" || view === "riwayat" || view === "converter") {
       setActiveView("conversion");
@@ -88,10 +92,14 @@ export function AppShell() {
       supabase.from("brand_settings").select("*").eq("user_id", userId).maybeSingle()
     ]);
 
-    setProducts((productRows || []).map(productFromRow));
-    const parsedCustomers = (customerRows || []).map(customerFromRow);
+    const safeProductRows = Array.isArray(productRows) ? productRows : [];
+    const safeCustomerRows = Array.isArray(customerRows) ? customerRows : [];
+    const safeBrandRows = !brandResult.error && Array.isArray(brandResult.data) ? brandResult.data : [];
+
+    setProducts(safeProductRows.map(productFromRow));
+    const parsedCustomers = safeCustomerRows.map(customerFromRow);
     setCustomers(parsedCustomers);
-    const parsedBrands = brandResult.error ? [] : (brandResult.data || []).map((row) => brandFromRow(row, parsedCustomers));
+    const parsedBrands = safeBrandRows.map((row) => brandFromRow(row, parsedCustomers));
     setBrands(mergeLegacyBrands(parsedBrands, parsedCustomers));
     setRole(profile?.role || "owner");
 
@@ -322,8 +330,10 @@ function brandFromRow(
 }
 
 function mergeLegacyBrands(brands: Brand[], customers: Customer[]) {
-  const existing = new Set(brands.map((brand) => brand.brand_name.toLowerCase()));
-  const legacyBrands: Brand[] = customers
+  const safeBrands = Array.isArray(brands) ? brands : [];
+  const safeCustomers = Array.isArray(customers) ? customers : [];
+  const existing = new Set(safeBrands.map((brand) => brand.brand_name.toLowerCase()));
+  const legacyBrands: Brand[] = safeCustomers
     .filter((customer) => customer.brand_name && !existing.has(customer.brand_name.toLowerCase()))
     .map((customer) => ({
       id: `legacy-${customer.id}`,
@@ -336,5 +346,5 @@ function mergeLegacyBrands(brands: Brand[], customers: Customer[]) {
       legacy: true
     }));
 
-  return [...brands, ...legacyBrands];
+  return [...safeBrands, ...legacyBrands];
 }

@@ -221,8 +221,10 @@ function sanitizeBrandForStorage(brand: Brand): Brand {
 }
 
 function mergeLegacyBrandsForStorage(brands: Brand[], customers: Customer[]) {
-  const existing = new Set(brands.map((brand) => brand.brand_name.toLowerCase()));
-  const legacyBrands = customers
+  const safeBrands = Array.isArray(brands) ? brands : [];
+  const safeCustomers = Array.isArray(customers) ? customers : [];
+  const existing = new Set(safeBrands.map((brand) => brand.brand_name.toLowerCase()));
+  const legacyBrands = safeCustomers
     .filter((customer) => customer.brand_name && !existing.has(customer.brand_name.toLowerCase()))
     .map((customer) => ({
       id: `legacy-${customer.id}`,
@@ -235,7 +237,7 @@ function mergeLegacyBrandsForStorage(brands: Brand[], customers: Customer[]) {
       legacy: true
     }));
 
-  return [...brands, ...legacyBrands];
+  return [...safeBrands, ...legacyBrands];
 }
 
 function sanitizeSettingsForStorage(settings: BrandSettings): BrandSettings {
